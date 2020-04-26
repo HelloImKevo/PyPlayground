@@ -1,0 +1,77 @@
+// Business and finance:
+Business and finance
+Accounting
+Marketing
+Nonprofits and foundations
+Small business
+Startups
+
+// Entertainment:
+Entertainment
+Movies
+Action and Adventure films
+Animated films
+Bollywood films
+Comedy films
+Documentary films
+Horror Films
+Sci-fi and fantasy films
+
+// Gaming:
+Activision
+Bungie
+Capcom
+Epic Games
+Nintendo
+Valve Corporation
+Xbox
+Board games
+Trading card games
+
+// Hobbies and interests:
+Antiques
+Birdwatching
+Books and literature
+Bitcoin cryptocurrency
+Fantasy sports
+Fishing
+Gardening
+Cooking and baking
+Hunting
+Knitting
+Motorcycles
+Adventure Travel
+National parks
+Weather
+
+// Music and radio:
+Classic rock
+Classical music
+Electronic music
+Punk
+Opera
+
+// News:
+Business and finance news
+Gaming news
+Movie news
+Sports news
+
+// Sports:
+Baseball
+Basketball
+Cycling
+Drone racing
+Surfing
+Table tennis
+Volleyball
+
+// Technology and computing:
+Technology and computing
+Artificial intelligence
+Cloud computing
+Cybersecurity
+Data science
+Drone technology
+Machine learning
+Virtual reality

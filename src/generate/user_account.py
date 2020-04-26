@@ -19,10 +19,52 @@ import time
 class UserData:
     first_names: list = None
     last_names: list = None
+    password_chunks: list = None
+    topics: list = None
 
-    def __init__(self, first_names: list, last_names: list):
+    def __init__(self, first_names: list, last_names: list, password_chunks: list, topics: list):
         self.first_names = first_names
         self.last_names = last_names
+        self.password_chunks = password_chunks
+        self.topics = topics
+
+    def generate_password(self) -> str:
+        first_chunk = self.random_element(self.password_chunks)
+        second_chunk = self.random_element(self.password_chunks)
+        # Ensure the second chunk is unique from the first chunk
+        while second_chunk is first_chunk:
+            second_chunk = self.random_element(self.password_chunks)
+
+        # Randomly capitalize characters
+        first_chunk = ''.join(random.choice((str.upper, str.lower))(c) for c in first_chunk)
+        second_chunk = ''.join(random.choice((str.upper, str.lower))(c) for c in second_chunk)
+
+        # Random special character separator
+        rand_sep = self.random_element(['!', '_', '(', ')', '*'])
+        first_rand_num = random.randint(1, 9)
+        second_rand_num = random.randint(1, 9)
+
+        return str.format("{}{}{}{}{}",
+                          first_chunk, first_rand_num, rand_sep, second_chunk, second_rand_num)
+
+    def get_random_topics(self, minimum: int, maximum: int) -> list:
+        random_topics = list()
+        how_many_topics = random.randint(minimum, maximum)
+        for topic_index in range(how_many_topics):
+            random_topic = self.random_element(self.topics)
+
+            # Prevent duplicate topics in the list (Keep fetching random
+            # topics until we have a unique one)
+            while random_topic in random_topics:
+                random_topic = self.random_element(self.topics)
+
+            random_topics.append(random_topic)
+
+        return random_topics
+
+    @staticmethod
+    def random_element(elements: list):
+        return elements[random.randrange(len(elements))]
 
 
 class User:
@@ -30,10 +72,13 @@ class User:
 
     _first_name: str = None
     _last_name: str = None
+    _birth_month: int = None
+    _birth_day: int = None
     _birth_year: int = None
     _domain: str = None
     _email_address: str = None
     _password: str = None
+    _topics: list = None
 
     def __init__(self, seed: int = None):
         self._seed = seed
@@ -43,27 +88,31 @@ class User:
             return False
         return self._first_name == other._first_name and \
                self._last_name == other._last_name and \
-               self._birth_year == other._birth_year
+               self._birth_year == other._birth_year and \
+               self._email_address == other._email_address
 
     def __str__(self):
-        return str.format("{} {}, {}",
+        return str.format("{} {}, {}, {}",
                           self._first_name,
                           self._last_name,
+                          self.get_birth_date(),
                           self._email_address)
 
-    def generate(self, _data: UserData):
+    def generate(self, user_data: UserData):
         if self._seed is None:
             raise ValueError('Seed is required')
 
         random.seed(self._seed)
 
         # First name
-        self._first_name = self._random_element(_data.first_names)
+        self._first_name = user_data.random_element(user_data.first_names)
 
         # Last name
-        self._last_name = self._random_element(_data.last_names)
+        self._last_name = user_data.random_element(user_data.last_names)
 
-        # Birth year
+        # Birth date
+        self._birth_month = random.randint(1, 12)
+        self._birth_day = random.randint(1, 28)
         self._birth_year = random.randint(1950, 2000)
 
         # Domain
@@ -83,15 +132,19 @@ class User:
                                          str(self._birth_year)[2:],
                                          self._domain).lower()
 
+        # Password
+        self._password = user_data.generate_password()
+
+        # Topics
+        self._topics = user_data.get_random_topics(minimum=4, maximum=7)
+
+    def get_birth_date(self):
+        return str.format("{}/{}/{}", self._birth_month, self._birth_day, self._birth_year)
+
     @staticmethod
     def _piece(element: str, min_bound: int) -> str:
         """Internal function."""
         return element[:min(min_bound, len(element))]
-
-    @staticmethod
-    def _random_element(elements: list):
-        """Internal function."""
-        return elements[random.randrange(len(elements))]
 
 
 def text_file_to_list(file_name: str) -> list:
@@ -99,6 +152,13 @@ def text_file_to_list(file_name: str) -> list:
         text_file: io.TextIOWrapper = open(file_name, mode='r')
         if text_file is not None:
             results = list(text_file.read().splitlines())
+            # Traverse a copy of the list to remove garbage elements
+            # Remove empty elements and common comment conventions
+            for result in results[:]:
+                if not result \
+                        or result.startswith('//') \
+                        or result.startswith('#'):
+                    results.remove(result)
             logging.debug(results)
             text_file.close()
             return results
@@ -161,6 +221,8 @@ def main(seed: int, how_many: int):
 
     first_names: list = text_file_to_list('first_names.txt')
     last_names: list = text_file_to_list('last_names.txt')
+    password_chunks: list = text_file_to_list('password_chunks.txt')
+    topics: list = text_file_to_list('topics.txt')
 
     if not first_names:
         raise ValueError("Missing required 'first_names.txt' file")
@@ -168,7 +230,13 @@ def main(seed: int, how_many: int):
     if not last_names:
         raise ValueError("Missing required 'last_names.txt' file")
 
-    user_data: UserData = UserData(first_names, last_names)
+    if not password_chunks:
+        raise ValueError("Missing required 'password_chunks.txt' file")
+
+    if not topics:
+        raise ValueError("Missing required 'topics.txt' file")
+
+    user_data: UserData = UserData(first_names, last_names, password_chunks, topics)
     users: list = list()
 
     for i in range(how_many):

@@ -25,8 +25,10 @@ def test_users():
 
     first_names: list = text_file_to_list('first_names.txt')
     last_names: list = text_file_to_list('last_names.txt')
+    password_chunks: list = text_file_to_list('password_chunks.txt')
+    topics: list = text_file_to_list('topics.txt')
 
-    user_data: UserData = UserData(first_names, last_names)
+    user_data: UserData = UserData(first_names, last_names, password_chunks, topics)
 
     users: list = list()
 
