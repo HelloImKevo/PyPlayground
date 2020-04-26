@@ -109,13 +109,20 @@ class User:
         if self._seed is None:
             raise ValueError('Seed is required')
 
+        # We want pseudo-random generated users (but we want predictable
+        # and reproducible values for future extension), so the random
+        # utils get re-seeded for each step.
         random.seed(self._seed)
 
         # First name
         self._first_name = user_data.random_element(user_data.first_names)
 
+        random.seed(self._seed + 1)
+
         # Last name
         self._last_name = user_data.random_element(user_data.last_names)
+
+        random.seed(self._seed + 2)
 
         # Birth date
         self._birth_month = random.randint(1, 12)
@@ -124,6 +131,8 @@ class User:
 
         # Domain
         self._domain = 'gmail'
+
+        random.seed(self._seed + 3)
 
         # Email
         name_bound: int = 4
@@ -139,11 +148,17 @@ class User:
                                          str(self._birth_year)[2:],
                                          self._domain).lower()
 
+        random.seed(self._seed + 4)
+
         # Password
         self._password = user_data.generate_password()
 
+        random.seed(self._seed + 5)
+
         # Phone Number
         self._phone_number = user_data.generate_phone()
+
+        random.seed(self._seed + 6)
 
         # Topics
         self._topics = user_data.get_random_topics(minimum=4, maximum=7)
@@ -254,8 +269,8 @@ def main(seed: int, how_many: int):
         user.generate(user_data)
         users.append(user)
 
-        # Increment the input seed (so every user does not have same seed
-        seed += 1
+        # Increment the input seed (each user must have a unique seed)
+        seed += 1000
 
     users_json: str = to_json_string(users)
     save_json_to_file('account_results.txt', users_json)
