@@ -47,6 +47,12 @@ class UserData:
         return str.format("{}{}{}{}{}",
                           first_chunk, first_rand_num, rand_sep, second_chunk, second_rand_num)
 
+    def generate_phone(self):
+        rand_zip = self.random_element([404, 909, 713, 951, 904, 305, 702])
+        rand_first_part = random.randint(100, 999)
+        rand_second_part = random.randint(1000, 9999)
+        return str.format("({}) {}-{}", rand_zip, rand_first_part, rand_second_part)
+
     def get_random_topics(self, minimum: int, maximum: int) -> list:
         random_topics = list()
         how_many_topics = random.randint(minimum, maximum)
@@ -78,6 +84,7 @@ class User:
     _domain: str = None
     _email_address: str = None
     _password: str = None
+    _phone_number: str = None
     _topics: list = None
 
     def __init__(self, seed: int = None):
@@ -134,6 +141,9 @@ class User:
 
         # Password
         self._password = user_data.generate_password()
+
+        # Phone Number
+        self._phone_number = user_data.generate_phone()
 
         # Topics
         self._topics = user_data.get_random_topics(minimum=4, maximum=7)
