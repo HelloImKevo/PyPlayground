@@ -12,6 +12,7 @@ import io
 import json
 import logging
 import random
+import re
 import sys
 import time
 
@@ -19,14 +20,28 @@ import time
 class UserData:
     first_names: list = None
     last_names: list = None
+    username_prefixes: list = None
+    username_suffixes: list = None
     password_chunks: list = None
     topics: list = None
 
-    def __init__(self, first_names: list, last_names: list, password_chunks: list, topics: list):
+    def __init__(self, first_names: list, last_names: list,
+                 username_prefixes: list, username_suffixes: list,
+                 password_chunks: list, topics: list):
         self.first_names = first_names
         self.last_names = last_names
+        self.username_prefixes = username_prefixes
+        self.username_suffixes = username_suffixes
         self.password_chunks = password_chunks
         self.topics = topics
+
+    def generate_username(self) -> str:
+        rand_prefix = self.random_element(['The', ''])
+        first_chunk = self.random_element(self.username_prefixes)
+        second_chunk = self.random_element(self.username_suffixes)
+        rand_sep = self.random_element(['x', '_', ''])
+        rand_num = random.randint(1, 299)
+        return str.format("{}{}{}{}{}", rand_prefix, first_chunk, rand_sep, second_chunk, rand_num)
 
     def generate_password(self) -> str:
         first_chunk = self.random_element(self.password_chunks)
@@ -83,6 +98,7 @@ class User:
     _birth_year: int = None
     _domain: str = None
     _email_address: str = None
+    _username: str = None
     _password: str = None
     _phone_number: str = None
     _topics: list = None
@@ -99,10 +115,11 @@ class User:
                self._email_address == other._email_address
 
     def __str__(self):
-        return str.format("{} {}, {}, {}",
-                          self._first_name,
-                          self._last_name,
+        full_name = "{} {}".format(self._first_name, self._last_name)
+        return str.format("{0: >20}, {1: >11}, {2: >26}, {3: >26}",
+                          full_name,
                           self.get_birth_date(),
+                          self._username,
                           self._email_address)
 
     def generate(self, user_data: UserData):
@@ -145,22 +162,23 @@ class User:
                                          self._piece(self._first_name, name_bound),
                                          '_',
                                          self._piece(self._last_name, 7),
-                                         str(self._birth_year)[2:],
+                                         str(self._birth_year)[1:],
                                          self._domain).lower()
 
+        # Username
         random.seed(self._seed + 4)
+        self._username = user_data.generate_username()
 
         # Password
+        random.seed(self._seed + 5)
         self._password = user_data.generate_password()
 
-        random.seed(self._seed + 5)
-
         # Phone Number
+        random.seed(self._seed + 6)
         self._phone_number = user_data.generate_phone()
 
-        random.seed(self._seed + 6)
-
         # Topics
+        random.seed(self._seed + 7)
         self._topics = user_data.get_random_topics(minimum=4, maximum=7)
 
     def get_birth_date(self):
@@ -213,7 +231,7 @@ def load_users_json_file(file_name: str) -> list:
             users = list()
             for user_dict_element in json_dict_list:
                 user: User = User()
-                print(type(user_dict_element), user_dict_element)
+                logging.debug(str.format("{} {}", type(user_dict_element), user_dict_element))
                 user.__dict__ = user_dict_element
                 users.append(user)
             text_file.close()
@@ -234,6 +252,28 @@ def to_json_string(objects: list) -> str:
     return json.dumps([obj.__dict__ for obj in objects], indent=4)
 
 
+def too_similar(user_a: User, user_b: User) -> bool:
+    # Check first and last name similarity
+    if user_a._first_name == user_b._first_name:
+        return True
+    if user_a._last_name == user_b._last_name:
+        return True
+
+    username_a_chunks = re.findall('[A-Z][a-z]*', user_a._username)
+    username_b_chunks = re.findall('[A-Z][a-z]*', user_b._username)
+    for a_chunk in username_a_chunks:
+        if a_chunk in username_b_chunks:
+            # Username is too similar
+            return True
+
+    return False
+
+
+def complex_enough(user: User) -> bool:
+    return len(user._username) >= 13 \
+           and len(user._email_address) >= 22
+
+
 # Begin main:
 def main(seed: int, how_many: int):
     # logging.getLogger().setLevel(level=logging.DEBUG)
@@ -246,6 +286,8 @@ def main(seed: int, how_many: int):
 
     first_names: list = text_file_to_list('first_names.txt')
     last_names: list = text_file_to_list('last_names.txt')
+    username_prefixes: list = text_file_to_list('username_prefixes.txt')
+    username_suffixes: list = text_file_to_list('username_suffixes.txt')
     password_chunks: list = text_file_to_list('password_chunks.txt')
     topics: list = text_file_to_list('topics.txt')
 
@@ -255,31 +297,61 @@ def main(seed: int, how_many: int):
     if not last_names:
         raise ValueError("Missing required 'last_names.txt' file")
 
+    if not username_prefixes:
+        raise ValueError("Missing required 'username_prefixes.txt' file")
+
+    if not username_suffixes:
+        raise ValueError("Missing required 'username_suffixes.txt' file")
+
     if not password_chunks:
         raise ValueError("Missing required 'password_chunks.txt' file")
 
     if not topics:
         raise ValueError("Missing required 'topics.txt' file")
 
-    user_data: UserData = UserData(first_names, last_names, password_chunks, topics)
+    user_data: UserData = UserData(first_names, last_names,
+                                   username_prefixes, username_suffixes,
+                                   password_chunks, topics)
     users: list = list()
 
-    for i in range(how_many):
+    iterations: int = 0
+    while len(users) < how_many and iterations <= 200:
         user: User = User(seed)
         user.generate(user_data)
-        users.append(user)
+
+        # Check to make sure each user is distinct
+        distinct: bool = True
+        for existing in users:
+            if too_similar(user, existing):
+                distinct = False
+                logging.debug(f"Discarding user: {user} - too similar to existing: {existing}")
+                # Break from for loop
+                break
+
+        enough_complexity = complex_enough(user)
+        if not enough_complexity:
+            logging.debug(f"Discarding user: {user} - not complex enough")
+
+        if distinct and enough_complexity:
+            users.append(user)
 
         # Increment the input seed (each user must have a unique seed)
         seed += 1000
+        iterations += 1
+
+    if iterations > 200:
+        raise ValueError(f"Unable to generate {how_many} unique users! "
+                         f"Consider adding more data to the text files.")
 
     users_json: str = to_json_string(users)
     save_json_to_file('account_results.txt', users_json)
 
-    print("Saved users to 'account_results.txt'...\n" + users_json)
+    print("\nSaved users to 'account_results.txt'...\n" + users_json)
 
     users_loaded = load_users_json_file('account_results.txt')
+    print("\nLoaded users from text file:")
     for user in users_loaded:
-        print(type(user), user)
+        print(user)
 
 
 if __name__ == '__main__':

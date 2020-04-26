@@ -26,10 +26,14 @@ def test_users():
 
     first_names: list = text_file_to_list('first_names.txt')
     last_names: list = text_file_to_list('last_names.txt')
+    username_prefixes: list = text_file_to_list('username_prefixes.txt')
+    username_suffixes: list = text_file_to_list('username_suffixes.txt')
     password_chunks: list = text_file_to_list('password_chunks.txt')
     topics: list = text_file_to_list('topics.txt')
 
-    user_data: UserData = UserData(first_names, last_names, password_chunks, topics)
+    user_data: UserData = UserData(first_names, last_names,
+                                   username_prefixes, username_suffixes,
+                                   password_chunks, topics)
 
     users: list = list()
 
@@ -65,6 +69,12 @@ def test_user_uniqueness():
     # Verify that all last names are unique
     last_names: list = text_file_to_list('last_names.txt')
     validate_list_uniqueness(last_names)
+
+    # Verify that all prefixes are unique
+    validate_list_uniqueness(text_file_to_list('username_prefixes.txt'))
+
+    # Verify that all suffixes are unique
+    validate_list_uniqueness(text_file_to_list('username_suffixes.txt'))
 
     print("Elements in each list are unique.")
 
