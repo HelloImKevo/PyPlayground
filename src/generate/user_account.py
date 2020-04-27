@@ -17,6 +17,16 @@ import sys
 import time
 
 
+class Utils:
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def get_random_element(elements: list):
+        return elements[random.randrange(len(elements))]
+
+
 class UserData:
     first_names: list = None
     last_names: list = None
@@ -100,7 +110,9 @@ class User:
     _email_address: str = None
     _username: str = None
     _password: str = None
+    _state: str = None
     _phone_number: str = None
+    _recovery_email: str = None
     _topics: list = None
 
     def __init__(self, seed: int = None):
@@ -147,7 +159,7 @@ class User:
         self._birth_year = random.randint(1950, 2000)
 
         # Domain
-        self._domain = 'gmail'
+        self._domain = 'mail'
 
         random.seed(self._seed + 3)
 
@@ -157,10 +169,11 @@ class User:
             name_bound = 3
         elif len(self._first_name) <= 3:
             name_bound = 2
-        print(str.format("Name={}, Len={}, Bound={}", self._first_name, len(self._first_name), name_bound))
+        logging.debug(str.format("Name={}, Len={}, Bound={}", self._first_name, len(self._first_name), name_bound))
+        # Site: https://www.mail.com/
         self._email_address = str.format("{}{}{}{}@{}.com",
                                          self._piece(self._first_name, name_bound),
-                                         '_',
+                                         '.',
                                          self._piece(self._last_name, 7),
                                          str(self._birth_year)[1:],
                                          self._domain).lower()
@@ -173,16 +186,29 @@ class User:
         random.seed(self._seed + 5)
         self._password = user_data.generate_password()
 
-        # Phone Number
+        # State
         random.seed(self._seed + 6)
-        self._phone_number = user_data.generate_phone()
+        self._state = Utils.get_random_element(['California', 'Alabama', 'Texas', 'Florida', 'Idaho', 'Oregon'])
 
-        # Topics
+        # TODO: Need to come up with a different phone number strategy - this is worthless
+        # Phone Number
         random.seed(self._seed + 7)
-        self._topics = user_data.get_random_topics(minimum=4, maximum=7)
+        self._phone_number = user_data.generate_phone()
 
     def get_birth_date(self):
         return str.format("{}/{}/{}", self._birth_month, self._birth_day, self._birth_year)
+
+    def get_email_address(self):
+        return self._email_address
+
+    def get_recovery_email(self):
+        return self._recovery_email
+
+    def set_recovery_email(self, recovery_email: str):
+        self._recovery_email = recovery_email
+
+    def set_topics(self, topics: list):
+        self._topics = topics
 
     @staticmethod
     def _piece(element: str, min_bound: int) -> str:
@@ -250,6 +276,21 @@ def get_seed() -> int:
 def to_json_string(objects: list) -> str:
     # json_string = json.dumps([ob.__dict__ for ob in list_name])
     return json.dumps([obj.__dict__ for obj in objects], indent=4)
+
+
+def apply_recovery_emails(users: list):
+    for user in users:
+        rand_recovery_email = Utils.get_random_element(users).get_email_address()
+
+        while rand_recovery_email == user.get_email_address():
+            rand_recovery_email = Utils.get_random_element(users).get_email_address()
+
+        user.set_recovery_email(rand_recovery_email)
+
+
+def apply_topics(users: list, user_data: UserData):
+    for user in users:
+        user.set_topics(user_data.get_random_topics(minimum=4, maximum=7))
 
 
 def too_similar(user_a: User, user_b: User) -> bool:
@@ -342,6 +383,9 @@ def main(seed: int, how_many: int):
     if iterations > 200:
         raise ValueError(f"Unable to generate {how_many} unique users! "
                          f"Consider adding more data to the text files.")
+
+    apply_recovery_emails(users)
+    apply_topics(users, user_data)
 
     users_json: str = to_json_string(users)
     save_json_to_file('account_results.txt', users_json)
