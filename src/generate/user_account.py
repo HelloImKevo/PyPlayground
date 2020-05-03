@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 
 """
+|   _   _                       _                                      _
+|  | | | | ___   ___  _ __     / \     ___   ___   ___   _   _  _ __  | |_
+|  | | | |/ __| / _ \| '__|   / _ \   / __| / __| / _ \ | | | || '_ \ | __|
+|  | |_| |\__ \|  __/| |     / ___ \ | (__ | (__ | (_) || |_| || | | || |_
+|   \___/ |___/ \___||_|    /_/   \_\ \___| \___| \___/  \__,_||_| |_| \__|
+|
+
 Generate a user account.
 
 Usage:
 
-    python3 user_account.py
+    python3 user_account.py <seed> <how_many>
 """
 
 import io
@@ -46,26 +53,26 @@ class UserData:
         self.topics = topics
 
     def generate_username(self) -> str:
-        rand_prefix = self.random_element(['The', ''])
-        first_chunk = self.random_element(self.username_prefixes)
-        second_chunk = self.random_element(self.username_suffixes)
-        rand_sep = self.random_element(['x', '_', ''])
+        rand_prefix = Utils.get_random_element(['The', ''])
+        first_chunk = Utils.get_random_element(self.username_prefixes)
+        second_chunk = Utils.get_random_element(self.username_suffixes)
+        rand_sep = Utils.get_random_element(['x', '_', ''])
         rand_num = random.randint(1, 299)
         return str.format("{}{}{}{}{}", rand_prefix, first_chunk, rand_sep, second_chunk, rand_num)
 
     def generate_password(self) -> str:
-        first_chunk = self.random_element(self.password_chunks)
-        second_chunk = self.random_element(self.password_chunks)
+        first_chunk = Utils.get_random_element(self.password_chunks)
+        second_chunk = Utils.get_random_element(self.password_chunks)
         # Ensure the second chunk is unique from the first chunk
         while second_chunk is first_chunk:
-            second_chunk = self.random_element(self.password_chunks)
+            second_chunk = Utils.get_random_element(self.password_chunks)
 
         # Randomly capitalize characters
         first_chunk = ''.join(random.choice((str.upper, str.lower))(c) for c in first_chunk)
         second_chunk = ''.join(random.choice((str.upper, str.lower))(c) for c in second_chunk)
 
         # Random special character separator
-        rand_sep = self.random_element(['!', '_', '(', ')', '*'])
+        rand_sep = Utils.get_random_element(['!', '_', '(', ')', '*'])
         first_rand_num = random.randint(1, 9)
         second_rand_num = random.randint(1, 9)
 
@@ -73,7 +80,7 @@ class UserData:
                           first_chunk, first_rand_num, rand_sep, second_chunk, second_rand_num)
 
     def generate_phone(self):
-        rand_zip = self.random_element([404, 909, 713, 951, 904, 305, 702])
+        rand_zip = Utils.get_random_element([404, 909, 713, 951, 904, 305, 702])
         rand_first_part = random.randint(100, 999)
         rand_second_part = random.randint(1000, 9999)
         return str.format("({}) {}-{}", rand_zip, rand_first_part, rand_second_part)
@@ -82,20 +89,16 @@ class UserData:
         random_topics = list()
         how_many_topics = random.randint(minimum, maximum)
         for topic_index in range(how_many_topics):
-            random_topic = self.random_element(self.topics)
+            random_topic = Utils.get_random_element(self.topics)
 
             # Prevent duplicate topics in the list (Keep fetching random
             # topics until we have a unique one)
             while random_topic in random_topics:
-                random_topic = self.random_element(self.topics)
+                random_topic = Utils.get_random_element(self.topics)
 
             random_topics.append(random_topic)
 
         return random_topics
-
-    @staticmethod
-    def random_element(elements: list):
-        return elements[random.randrange(len(elements))]
 
 
 class User:
@@ -144,12 +147,12 @@ class User:
         random.seed(self._seed)
 
         # First name
-        self._first_name = user_data.random_element(user_data.first_names)
+        self._first_name = Utils.get_random_element(user_data.first_names)
 
         random.seed(self._seed + 1)
 
         # Last name
-        self._last_name = user_data.random_element(user_data.last_names)
+        self._last_name = Utils.get_random_element(user_data.last_names)
 
         random.seed(self._seed + 2)
 
@@ -282,8 +285,10 @@ def apply_recovery_emails(users: list):
     for user in users:
         rand_recovery_email = Utils.get_random_element(users).get_email_address()
 
-        while rand_recovery_email == user.get_email_address():
-            rand_recovery_email = Utils.get_random_element(users).get_email_address()
+        # If there are multiple users, give each of them different recovery emails.
+        if len(users) > 1:
+            while rand_recovery_email == user.get_email_address():
+                rand_recovery_email = Utils.get_random_element(users).get_email_address()
 
         user.set_recovery_email(rand_recovery_email)
 
@@ -402,7 +407,7 @@ if __name__ == '__main__':
     if sys.argv is not None and len(sys.argv) > 2:
         # Assume this file is being executed from CLI or Python interpreter
         # The 0th arg is the module filename.
-        main(seed=sys.argv[1], how_many=sys.argv[2])
+        main(seed=int(sys.argv[1]), how_many=int(sys.argv[2]))
     else:
         # Assume this file is being executed within an IDE
         main(get_seed(), 1)
