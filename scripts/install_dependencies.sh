@@ -30,6 +30,7 @@ This script will check and install the necessary dependencies needed to
 run all the Python scripts in this project. This includes:
     * Kivy
     * TKinter
+    * PyGame
     * Flask
     * Django
     * Other fun stuff
@@ -101,7 +102,7 @@ else
     pip3 install kivy
 fi
 
-echo -ne '###################        (80%)\r'
+echo -ne '###################        (70%)\r'
 
 # Install TKinter
 if python3 -c "import tkinter" &>/dev/null; then
@@ -110,6 +111,16 @@ else
     echo "TKinter is a standard Python GUI library - it should be installed..."
     echo 'Someone please halp! Aborting...'
     exit 0
+fi
+
+echo -ne '###################        (92%)\r'
+
+# Install PyGame
+if pip3 show pygame &>/dev/null; then
+    echo "PyGame is installed"
+else
+    echo 'Installing PyGame...'
+    pip3 install pygame
 fi
 
 echo -ne '########################   (100%)\r'
