@@ -1,6 +1,9 @@
 # PyPlayground by Kevo
 
-This is a collection of miscellaneous Python utilities built using online classes and many helpful references from around the web. Many of these utilities and games are straight-up copy/pasted from StackOverflow posts and Python community forums. I plan to clean up and organized this repo over time. I use the IntelliJ PyCharm IDE for development.
+This is a collection of miscellaneous Python utilities built using online classes and
+many helpful references from around the web. Many of these utilities and games are
+straight-up copy/pasted from StackOverflow posts and Python community forums. I plan to
+clean up and organized this repo over time. I use the **IntelliJ PyCharm IDE** for development.
 
 # Project Dependencies
 
@@ -25,14 +28,38 @@ $ pip3 install flask
 
 # PyCharm Interpreter Setup
 
-To fix "unresolved references" errors in individual python packages, you'll need to right click directories with module imports, right click, and select "Mark Directory As... Sources Root"  
+To fix "unresolved references" errors in individual python packages, you'll need to right-click
+directories with module imports, right click, and select "Mark Directory As... Sources Root"  
 
 Inspect the `.idea/misc.xml` file and confirm that the jdk-name is "Python 3.7", and not "Python 3.7 (Project Name)".  
 
-Inspect the `.idea/Project.iml` file and confirm there is an order entry for:  
-```
+Inspect the `.idea/Project.iml` file and confirm there is an `orderEntry` element for:  
+```xml
 <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
 ```
+
+## Contributing
+
+There are only loosely defined contribution guidelines as of right now. Please configure
+the commit template by executing:
+```commandline
+git config commit.template ./COMMIT_TEMPLATE.md
+```
+Use the **Changelist Summary** section to document:
+* Explanations that justify the changes
+* Interesting things you learned
+* Note any bugs or anomalies you encountered on the way
+
+The "Diff Title" (commit subject line) can be derived by completing the phrase,
+"After this commit, the [ application | library | documentation ] will..." or
+"When this diff is merged it will...". It is good to keep these under 72 characters,
+and high level.
+
+The summary can often be as easy as answering the question: "What code changes were made
+and what is the expected behavior once landed?".
+
+When opening a Pull Request, please fill out the **Motivation**, **Test Plan** and
+**Related PRs / Issues** whenever applicable.
 
 ## Git Workflow References
 

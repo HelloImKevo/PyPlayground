@@ -47,7 +47,7 @@ def main(commit_title=None):
     if not commit_title:
         commit_title = GitCommand.get_commit_title()
 
-    file_name: str = '.github/pull_request_template.md'
+    file_name: str = '.github/PULL_REQUEST_TEMPLATE.md'
 
     try:
         template_file = FileUtils.open_template_file(file_name)
