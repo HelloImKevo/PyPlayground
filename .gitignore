@@ -144,3 +144,6 @@ dmypy.json
 
 # Generated files
 .idea/**/contentModel.xml
+
+# IDE User-specific settings
+.vscode/settings.json
